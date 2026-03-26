@@ -1,0 +1,200 @@
+{
+  "entities": {
+    "Message": {
+      "title": "Message",
+      "description": "A chat message in a conversation.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "User ID of the message owner" },
+        "role": { "type": "string", "enum": ["user", "assistant"], "description": "Role of the message sender" },
+        "content": { "type": "string", "description": "Text content of the message" },
+        "type": { "type": "string", "enum": ["text", "image", "audio"], "description": "Type of message content" },
+        "mediaUrl": { "type": "string", "description": "Optional URL for image or audio media" },
+        "sources": { 
+          "type": "array", 
+          "items": {
+            "type": "object",
+            "properties": {
+              "uri": { "type": "string" },
+              "title": { "type": "string" }
+            }
+          },
+          "description": "Grounding sources for the message"
+        },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp of message creation" }
+      },
+      "required": ["uid", "role", "content", "type", "createdAt"]
+    },
+    "Log": {
+      "title": "Log",
+      "description": "System performance and error logs.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "User ID of the log owner" },
+        "type": { "type": "string", "enum": ["performance", "error"], "description": "Type of log entry" },
+        "operation": { "type": "string", "description": "The operation being logged" },
+        "latency": { "type": "number", "description": "Latency in milliseconds" },
+        "error": { "type": "string", "description": "Error message if type is error" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp of log entry" }
+      },
+      "required": ["uid", "type", "operation", "createdAt"]
+    },
+    "Feedback": {
+      "title": "Feedback",
+      "description": "User feedback on the AI experience.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "User ID of the feedback owner" },
+        "rating": { "type": "integer", "description": "Rating from 1 to 5" },
+        "comment": { "type": "string", "description": "User's comment" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp of feedback submission" }
+      },
+      "required": ["uid", "rating", "createdAt"]
+    },
+    "Preferences": {
+      "title": "Preferences",
+      "description": "User personalization settings.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "User ID" },
+        "style": { "type": "string", "enum": ["concise", "detailed", "creative", "technical"], "description": "Preferred AI response style" },
+        "interests": { "type": "array", "items": { "type": "string" }, "description": "User interests for personalization" },
+        "language": { "type": "string", "description": "Preferred UI language" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "style", "updatedAt"]
+    },
+    "Subscription": {
+      "title": "Subscription",
+      "description": "User subscription details.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "User ID" },
+        "plan": { "type": "string", "enum": ["free", "pro", "enterprise"], "description": "Subscription plan level" },
+        "status": { "type": "string", "enum": ["active", "canceled", "expired"], "description": "Current status" },
+        "expiresAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "plan", "status"]
+    },
+    "APIKey": {
+      "title": "APIKey",
+      "description": "Developer API keys for ecosystem integration.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Owner User ID" },
+        "key": { "type": "string", "description": "Masked API Key" },
+        "name": { "type": "string", "description": "Key name/label" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "key", "name"]
+    },
+    "EthicsLog": {
+      "title": "EthicsLog",
+      "description": "Logs for ethical monitoring and safety checks.",
+      "type": "object",
+      "properties": {
+        "timestamp": { "type": "string", "format": "date-time" },
+        "check": { "type": "string", "description": "Type of safety check" },
+        "status": { "type": "string", "enum": ["pass", "flagged", "blocked"] },
+        "details": { "type": "string" }
+      },
+      "required": ["timestamp", "check", "status"]
+    },
+    "ImpactMetric": {
+      "title": "ImpactMetric",
+      "description": "Metrics for global sustainability and impact tracking.",
+      "type": "object",
+      "properties": {
+        "category": { "type": "string", "enum": ["energy", "health", "cybersecurity", "environment"] },
+        "value": { "type": "number" },
+        "unit": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["category", "value", "unit", "timestamp"]
+    },
+    "EducationalContent": {
+      "title": "EducationalContent",
+      "description": "Knowledge base and educational resources for legacy transfer.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "type": { "type": "string", "enum": ["algorithm", "tutorial", "whitepaper"] },
+        "content": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "type", "content"]
+    },
+    "ModelConfig": {
+      "title": "ModelConfig",
+      "description": "Custom fine-tuning and evolution parameters for the AI model.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "style": { "type": "string", "enum": ["concise", "detailed", "creative", "technical", "academic", "casual"] },
+        "tone": { "type": "string", "enum": ["professional", "friendly", "authoritative", "empathetic"] },
+        "domainFocus": { "type": "array", "items": { "type": "string" } },
+        "learningRate": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "style", "tone", "updatedAt"]
+    },
+    "LearningLog": {
+      "title": "LearningLog",
+      "description": "Logs of autonomous AI self-improvement and updates.",
+      "type": "object",
+      "properties": {
+        "timestamp": { "type": "string", "format": "date-time" },
+        "improvement": { "type": "string" },
+        "category": { "type": "string", "enum": ["accuracy", "latency", "ethics", "knowledge"] },
+        "impact": { "type": "number" }
+      },
+      "required": ["timestamp", "improvement", "category"]
+    }
+  },
+  "firestore": {
+    "/messages": {
+      "schema": "Message",
+      "description": "Global collection of chat messages, secured by user ID."
+    },
+    "/logs": {
+      "schema": "Log",
+      "description": "System logs for monitoring performance and errors."
+    },
+    "/feedback": {
+      "schema": "Feedback",
+      "description": "User feedback collection."
+    },
+    "/preferences": {
+      "schema": "Preferences",
+      "description": "User personalization settings."
+    },
+    "/subscriptions": {
+      "schema": "Subscription",
+      "description": "User subscription management."
+    },
+    "/api_keys": {
+      "schema": "APIKey",
+      "description": "Developer API keys for ecosystem access."
+    },
+    "/ethics_logs": {
+      "schema": "EthicsLog",
+      "description": "Global ethics and safety monitoring logs."
+    },
+    "/impact_metrics": {
+      "schema": "ImpactMetric",
+      "description": "Global sustainability and impact metrics."
+    },
+    "/educational_content": {
+      "schema": "EducationalContent",
+      "description": "Public knowledge base for AI legacy transfer."
+    },
+    "/model_configs": {
+      "schema": "ModelConfig",
+      "description": "User-specific custom AI fine-tuning configurations."
+    },
+    "/learning_logs": {
+      "schema": "LearningLog",
+      "description": "Global logs of AI self-learning and evolution."
+    }
+  }
+}

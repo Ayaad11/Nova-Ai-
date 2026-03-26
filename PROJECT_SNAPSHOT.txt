@@ -1,0 +1,530 @@
+# Multi-modal AI Studio Project Snapshot
+This file contains the entire codebase for the Multi-modal AI Studio application.
+
+## Directory Structure
+- .env.example
+- .gitignore
+- firebase-applet-config.json
+- firebase-blueprint.json
+- firestore.rules
+- index.html
+- metadata.json
+- package.json
+- tsconfig.json
+- vite.config.ts
+- src/
+  - App.tsx
+  - index.css
+  - main.tsx
+  - components/
+    - AIStudio.tsx
+    - ErrorBoundary.tsx
+  - lib/
+    - firebase.ts
+    - gemini.ts
+    - openrouter.ts
+    - utils.ts
+  - types/
+    - window.d.ts
+
+---
+FILE: /package.json
+---
+{
+  "name": "react-example",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port=3000 --host=0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview",
+    "clean": "rm -rf dist",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@google/genai": "^1.29.0",
+    "@tailwindcss/vite": "^4.1.14",
+    "@vitejs/plugin-react": "^5.0.4",
+    "clsx": "^2.1.1",
+    "dotenv": "^17.2.3",
+    "express": "^4.21.2",
+    "firebase": "^12.11.0",
+    "lucide-react": "^0.546.0",
+    "motion": "^12.23.24",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-markdown": "^10.1.0",
+    "tailwind-merge": "^3.5.0",
+    "vite": "^6.2.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.14.0",
+    "autoprefixer": "^10.4.21",
+    "tailwindcss": "^4.1.14",
+    "tsx": "^4.21.0",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0"
+  }
+}
+
+---
+FILE: /tsconfig.json
+---
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false,
+    "module": "ESNext",
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "allowJs": true,
+    "jsx": "react-jsx",
+    "paths": {
+      "@/*": [
+        "./*"
+      ]
+    },
+    "allowImportingTsExtensions": true,
+    "noEmit": true
+  }
+}
+
+---
+FILE: /vite.config.ts
+---
+import tailwindcss from '@tailwindcss/vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
+import {defineConfig, loadEnv} from 'vite';
+
+export default defineConfig(({mode}) => {
+  const env = loadEnv(mode, '.', '');
+  return {
+    plugins: [react(), tailwindcss()],
+    define: {
+      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+    },
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, '.'),
+      },
+    },
+    server: {
+      hmr: process.env.DISABLE_HMR !== 'true',
+    },
+  };
+});
+
+---
+FILE: /index.html
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Multi-modal AI Studio</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
+---
+FILE: /metadata.json
+---
+{
+  "name": "Multi-modal AI Studio",
+  "description": "A comprehensive platform for text, image, and audio AI interactions powered by Gemini.",
+  "requestFramePermissions": ["microphone"]
+}
+
+---
+FILE: /firestore.rules
+---
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "a65318487@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    match /messages/{messageId} {
+      allow read: if isAuthenticated() && request.auth.uid == resource.data.uid;
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.uid;
+      allow delete: if isAuthenticated() && request.auth.uid == resource.data.uid;
+    }
+
+    match /logs/{logId} {
+      allow read: if isAuthenticated() && request.auth.uid == resource.data.uid;
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.uid;
+    }
+
+    match /feedback/{feedbackId} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.uid;
+    }
+
+    match /preferences/{prefId} {
+      allow read: if isAuthenticated() && request.auth.uid == resource.data.uid;
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.uid;
+      allow update: if isAuthenticated() && request.auth.uid == resource.data.uid;
+    }
+
+    match /subscriptions/{subId} {
+      allow read: if isAuthenticated() && request.auth.uid == resource.data.uid;
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.uid;
+      allow update: if isAdmin();
+    }
+
+    match /api_keys/{keyId} {
+      allow read: if isAuthenticated() && request.auth.uid == resource.data.uid;
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.uid;
+      allow delete: if isAuthenticated() && request.auth.uid == resource.data.uid;
+    }
+
+    match /ethics_logs/{logId} {
+      allow read: if isAuthenticated();
+      allow write: if false;
+    }
+
+    match /impact_metrics/{metricId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /educational_content/{contentId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /model_configs/{configId} {
+      allow read: if isAuthenticated() && request.auth.uid == resource.data.uid;
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.uid;
+      allow update: if isAuthenticated() && request.auth.uid == resource.data.uid;
+    }
+
+    match /learning_logs/{logId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+
+---
+FILE: /firebase-blueprint.json
+---
+{
+  "entities": {
+    "Message": {
+      "title": "Message",
+      "description": "A chat message in a conversation.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "role": { "type": "string", "enum": ["user", "assistant"] },
+        "content": { "type": "string" },
+        "type": { "type": "string", "enum": ["text", "image", "audio"] },
+        "mediaUrl": { "type": "string" },
+        "sources": { "type": "array", "items": { "type": "object", "properties": { "uri": { "type": "string" }, "title": { "type": "string" } } } },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "role", "content", "type", "createdAt"]
+    },
+    "Log": {
+      "title": "Log",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "type": { "type": "string", "enum": ["performance", "error"] },
+        "operation": { "type": "string" },
+        "latency": { "type": "number" },
+        "error": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "type", "operation", "createdAt"]
+    },
+    "ModelConfig": {
+      "title": "ModelConfig",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "style": { "type": "string", "enum": ["concise", "detailed", "creative", "technical", "academic", "casual"] },
+        "tone": { "type": "string", "enum": ["professional", "friendly", "authoritative", "empathetic"] },
+        "domainFocus": { "type": "array", "items": { "type": "string" } },
+        "learningRate": { "type": "number" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "style", "tone", "updatedAt"]
+    },
+    "LearningLog": {
+      "title": "LearningLog",
+      "type": "object",
+      "properties": {
+        "timestamp": { "type": "string", "format": "date-time" },
+        "improvement": { "type": "string" },
+        "category": { "type": "string", "enum": ["accuracy", "latency", "ethics", "knowledge"] },
+        "impact": { "type": "number" }
+      },
+      "required": ["timestamp", "improvement", "category"]
+    }
+  },
+  "firestore": {
+    "/messages": { "schema": "Message", "description": "Chat messages" },
+    "/logs": { "schema": "Log", "description": "System logs" },
+    "/model_configs": { "schema": "ModelConfig", "description": "Custom AI configs" },
+    "/learning_logs": { "schema": "LearningLog", "description": "AI evolution logs" }
+  }
+}
+
+---
+FILE: /src/main.tsx
+---
+import {StrictMode} from 'react';
+import {createRoot} from 'react-dom/client';
+import App from './App.tsx';
+import './index.css';
+
+if (typeof (window as any).process === 'undefined') {
+  (window as any).process = { env: {} };
+}
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <App />
+  </StrictMode>,
+);
+
+---
+FILE: /src/App.tsx
+---
+import AIStudio from './components/AIStudio';
+import ErrorBoundary from './components/ErrorBoundary';
+
+export default function App() {
+  return (
+    <ErrorBoundary>
+      <div className="min-h-screen bg-zinc-950">
+        <AIStudio />
+      </div>
+    </ErrorBoundary>
+  );
+}
+
+---
+FILE: /src/index.css
+---
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+@layer base {
+  body {
+    @apply bg-zinc-950 text-zinc-100 antialiased;
+  }
+}
+
+.glass-panel {
+  @apply bg-zinc-900/50 backdrop-blur-xl border border-zinc-800/50;
+}
+
+---
+FILE: /src/lib/gemini.ts
+---
+import { GoogleGenAI, Modality, Type, FunctionDeclaration } from "@google/genai";
+
+export const models = {
+  text: "gemini-3-flash-preview",
+  image: "gemini-3.1-flash-image-preview",
+  audio: "gemini-2.5-flash-preview-tts",
+};
+
+const controlIoTDevice: FunctionDeclaration = {
+  name: "controlIoTDevice",
+  description: "Control home automation devices.",
+  parameters: {
+    type: Type.OBJECT,
+    properties: {
+      device: { type: Type.STRING },
+      action: { type: Type.STRING, enum: ["on", "off", "set_temperature"] },
+      value: { type: Type.NUMBER }
+    },
+    required: ["device", "action"]
+  }
+};
+
+const getSystemStatus: FunctionDeclaration = {
+  name: "getSystemStatus",
+  description: "Get real-time status of connected systems.",
+  parameters: {
+    type: Type.OBJECT,
+    properties: { system: { type: Type.STRING } },
+    required: ["system"]
+  }
+};
+
+function getAI() {
+  const apiKey = (globalThis as any).process?.env?.API_KEY || 
+                 (globalThis as any).process?.env?.GEMINI_API_KEY || "";
+  return new GoogleGenAI({ apiKey });
+}
+
+export async function chatWithAI(message: string, history: any[], customInstruction?: string) {
+  const ai = getAI();
+  const response = await ai.models.generateContent({
+    model: models.text,
+    contents: [...history, { role: "user", parts: [{ text: message }] }],
+    config: {
+      systemInstruction: customInstruction || "You are a multi-modal AI assistant.",
+      tools: [{ googleSearch: {} }, { functionDeclarations: [controlIoTDevice, getSystemStatus] }],
+      toolConfig: { includeServerSideToolInvocations: true }
+    },
+  });
+  return {
+    text: response.text,
+    groundingMetadata: response.candidates?.[0]?.groundingMetadata,
+    functionCalls: response.functionCalls
+  };
+}
+
+export async function generateImage(prompt: string) {
+  const ai = getAI();
+  const response = await ai.models.generateContent({
+    model: models.image,
+    contents: { parts: [{ text: prompt }] },
+    config: { imageConfig: { aspectRatio: "1:1", imageSize: "1K" } },
+  });
+  for (const part of response.candidates?.[0]?.content?.parts || []) {
+    if (part.inlineData) return `data:image/png;base64,${part.inlineData.data}`;
+  }
+  throw new Error("No image generated");
+}
+
+export async function textToSpeech(text: string, voice: any = 'Kore') {
+  const ai = getAI();
+  const response = await ai.models.generateContent({
+    model: models.audio,
+    contents: [{ parts: [{ text }] }],
+    config: {
+      responseModalities: [Modality.AUDIO],
+      speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } },
+    },
+  });
+  const data = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+  if (data) return `data:audio/wav;base64,${data}`;
+  throw new Error("No audio generated");
+}
+
+export async function analyzeImage(prompt: string, base64Image: string, mimeType: string) {
+  const ai = getAI();
+  const response = await ai.models.generateContent({
+    model: models.text,
+    contents: { parts: [{ text: prompt }, { inlineData: { data: base64Image.split(',')[1], mimeType } }] },
+    config: { systemInstruction: "Analyze the image." },
+  });
+  return { text: response.text };
+}
+
+---
+FILE: /src/lib/openrouter.ts
+---
+export async function chatWithOpenRouter(message: string, history: any[], systemInstruction?: string) {
+  const apiKey = (globalThis as any).process?.env?.OPENROUTER_API_KEY || "";
+  if (!apiKey) throw new Error("OpenRouter API Key missing.");
+
+  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+      "HTTP-Referer": window.location.origin,
+      "X-Title": "AI Studio Hybrid System"
+    },
+    body: JSON.stringify({
+      model: "openai/gpt-3.5-turbo",
+      messages: [{ role: "system", content: systemInstruction || "Powered by OpenRouter." }, ...history, { role: "user", content: message }],
+    })
+  });
+  const data = await response.json();
+  return { text: data.choices[0].message.content };
+}
+
+---
+FILE: /src/lib/firebase.ts
+---
+import { initializeApp } from 'firebase/app';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, User } from 'firebase/auth';
+import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, Timestamp, deleteDoc, getDocs, writeBatch, doc, where, setDoc, getDoc } from 'firebase/firestore';
+import firebaseConfig from '../../firebase-applet-config.json';
+
+const app = initializeApp(firebaseConfig);
+export const auth = getAuth(app);
+export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+export const googleProvider = new GoogleAuthProvider();
+
+export { signInWithPopup, signOut, onAuthStateChanged, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, Timestamp, deleteDoc, getDocs, writeBatch, doc, where, setDoc, getDoc };
+export type { User };
+
+export enum OperationType { CREATE = 'create', UPDATE = 'update', DELETE = 'delete', LIST = 'list', GET = 'get', WRITE = 'write' }
+export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: { userId: auth.currentUser?.uid, email: auth.currentUser?.email },
+    operationType, path
+  };
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  throw new Error(JSON.stringify(errInfo));
+}
+
+---
+FILE: /src/components/AIStudio.tsx
+---
+// [Note: This is a large file, truncated for summary but available in the full project]
+// It contains the main UI, chat logic, multi-modal integration, and the evolution dashboard.
+// Refer to the actual file in the project for the full 1400+ lines of code.
+
+---
+FILE: /src/components/ErrorBoundary.tsx
+---
+import React, { Component, ErrorInfo, ReactNode } from 'react';
+
+interface Props { children: ReactNode; }
+interface State { hasError: boolean; error: Error | null; }
+
+export default class ErrorBoundary extends Component<Props, State> {
+  public state: State = { hasError: false, error: null };
+  public static getDerivedStateFromError(error: Error): State { return { hasError: true, error }; }
+  public componentDidCatch(error: Error, errorInfo: ErrorInfo) { console.error('Uncaught error:', error, errorInfo); }
+  public render() {
+    if (this.state.hasError) {
+      return <div className="p-8 text-center">Something went wrong. {this.state.error?.message}</div>;
+    }
+    return this.props.children;
+  }
+}

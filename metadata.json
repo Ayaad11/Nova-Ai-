@@ -1,0 +1,5 @@
+{
+  "name": "Multi-modal AI Studio",
+  "description": "A comprehensive platform for text, image, and audio AI interactions powered by Gemini.",
+  "requestFramePermissions": ["microphone"]
+}
